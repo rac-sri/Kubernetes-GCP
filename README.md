@@ -11,9 +11,9 @@ In Development (Dev) environments, running containers on a single host for devel
 - Accessibility from the outside world
 - Seamless updates/rollbacks without any downtime.
 
-_Container orchestrators_ are tools which group systems together to form clusters where containers' deployment and management is automated at scale while meeting the requirements mentioned above.
+**Container orchestrators** are tools which group systems together to form clusters where containers' deployment and management is automated at scale while meeting the requirements mentioned above.
 
-_Most container orchestrators can:_
+**Most container orchestrators can**
 Group hosts together while creating a cluster
 Schedule containers to run on hosts in the cluster based on resources availability
 Enable containers in a cluster to communicate with each other regardless of the host they are deployed to in the cluster
@@ -22,7 +22,7 @@ Group sets of similar containers and bind them to load-balancing constructs to s
 Manage and optimize resource usage
 Allow for implementation of policies to secure access to applications running inside containers.
 
-###### Kubernetes offers a very rich set of features for container orchestration. Some of its fully supported features are:
+#### Kubernetes offers a very rich set of features for container orchestration. Some of its fully supported features are:
 
 - Automatic bin packing
 - Kubernetes automatically schedules containers based on resource needs and constraints, to maximize utilization without sacrificing availability.
@@ -43,7 +43,7 @@ Allow for implementation of policies to secure access to applications running in
 
 ###### The Cloud Native Computing Foundation (CNCF)
 
-    is one of the projects hosted by the Linux Foundation. CNCF aims to accelerate the adoption of containers, microservices, and cloud-native applications.
+CNCF is one of the projects hosted by the Linux Foundation. CNCF aims to accelerate the adoption of containers, microservices, and cloud-native applications.
 
 CNCF hosts a multitude of projects, with more to be added in the future. CNCF provides resources to each of the projects, but, at the same time, each project continues to operate independently under its pre-existing governance structure and with its existing maintainers. Projects within CNCF are categorized based on achieved status: Sandbox, Incubating, and Graduated. At the time this course was created, there were six projects with Graduated status (Kubernetes) and many more still Incubating and in the Sandbox.
 
@@ -55,7 +55,7 @@ At a very high level, Kubernetes has the following main components:
 - One or more worker nodes
 - Distributed key-value store, such as etcd.
 
-###### Master Node
+#### Master Node
 
 The master node provides a running environment for the control plane responsible for managing the state of a Kubernetes cluster, and it is the brain behind all operations inside the cluster. The control plane components are agents with very distinct roles in the cluster's management. In order to communicate with the Kubernetes cluster, users send requests to the master node via a Command Line Interface (CLI) tool, a Web User-Interface (Web UI) Dashboard, or Application Programming Interface (API).
 
@@ -83,7 +83,7 @@ Out of all the control plane components, only the API server is able to communic
 etcd's CLI management tool provides backup, snapshot, and restore capabilities which come in handy especially for a single etcd instance Kubernetes cluster - common in Development and learning environments. However, in Stage and Production environments, it is extremely important to replicate the data stores in HA mode, for cluster configuration data resiliency.
 Besides storing the cluster state, etcd is also used to store configuration details such as subnets, ConfigMaps, Secrets, etc.
 
-###### Worker Node
+#### Worker Node
 
 A worker node provides a running environment for client applications. Though containerized microservices, these applications are encapsulated in Pods, controlled by the cluster control plane agents running on the master node. Pods are scheduled on worker nodes, where they find required compute, memory and storage resources to run, and networking to talk to each other and the outside world.
 _A Pod is the smallest scheduling unit in Kubernetes. It is a logical collection of one or more containers scheduled together._
@@ -124,3 +124,36 @@ _The Kubernetes network model aims to reduce complexity, and it treats Pods as V
 ![](images/cni.png)
 
 **For a successfully deployed containerized applications running in Pods inside a Kubernetes cluster, it requires accessibility from the outside world. Kubernetes enables external accessibility through services, complex constructs which encapsulate networking rules definitions on cluster nodes. By exposing services to the external world with kube-proxy, applications become accessible from outside the cluster over a virtual IP.**
+
+## Installation
+
+Kubernetes can be installed using different configurations. The four major installation types are briefly presented below:
+
+- **All-in-One Single-Node Installation**
+  In this setup, all the master and worker components are installed and running on a single-node. While it is useful for learning, development, and testing, it should not be used in production. Minikube is one such example, and we are going to explore it in future chapters.
+- **Single-Node etcd, Single-Master and Multi-Worker Installation**
+  In this setup, we have a single-master node, which also runs a single-node etcd instance. Multiple worker nodes are connected to the master node.
+- **Single-Node etcd, Multi-Master and Multi-Worker Installation**
+  In this setup, we have multiple-master nodes configured in HA mode, but we have a single-node etcd instance. Multiple worker nodes are connected to the master nodes.
+- **Multi-Node etcd, Multi-Master and Multi-Worker Installation**
+  In this mode, etcd is configured in clustered HA mode, the master nodes are all configured in HA mode, connecting to multiple worker nodes. This is the most advanced and recommended production setup.
+
+#### LocalHost Installation
+
+These are only a few localhost installation options available to deploy single- or multi-node Kubernetes clusters on our workstation/laptop:
+
+- Minikube - single-node local Kubernetes cluster
+- Docker Desktop - single-node local Kubernetes cluster for Windows and Mac
+- CDK on LXD - multi-node local cluster with LXD containers.
+- Minikube is the preferred and recommended way to create an all-in-one Kubernetes setup locally.
+
+#### Some useful tools/resources available:
+
+**kubeadm**
+![kubeadm](https://github.com/kubernetes/kubeadm) is a first-class citizen on the Kubernetes ecosystem. It is a secure and recommended way to bootstrap a single- or multi-node Kubernetes cluster. It has a set of building blocks to setup the cluster, but it is easily extendable to add more features. Please note that kubeadm does not support the provisioning of hosts.
+**kubespray**
+With ![kubespray](https://kubernetes.io/docs/setup/production-environment/tools/kubespray/) (formerly known as kargo), we can install Highly Available Kubernetes clusters on AWS, GCE, Azure, OpenStack, or bare metal. Kubespray is based on Ansible, and is available on most Linux distributions. It is a Kubernetes Incubator project.
+**kops**
+With ![kops](https://kubernetes.io/docs/setup/custom-cloud/kops/), we can create, destroy, upgrade, and maintain production-grade, highly-available Kubernetes clusters from the command line. It can provision the machines as well. Currently, AWS is officially supported. Support for GCE is in beta, and VMware vSphere in alpha stage, and other platforms are planned for the future. Explore the kops project for more details.
+**kube-aws**
+With ![kube-aws](https://github.com/kubernetes-incubator/kube-aws) we can create, upgrade and destroy Kubernetes clusters on AWS from the command line. Kube-aws is also a Kubernetes Incubator project.
