@@ -41,7 +41,7 @@ Allow for implementation of policies to secure access to applications running in
 - Batch execution
 - Kubernetes supports batch execution, long-running jobs, and replaces failed containers.
 
-###### The Cloud Native Computing Foundation (CNCF)
+##### The Cloud Native Computing Foundation (CNCF)
 
 CNCF is one of the projects hosted by the Linux Foundation. CNCF aims to accelerate the adoption of containers, microservices, and cloud-native applications.
 
@@ -377,9 +377,125 @@ For authentication, Kubernetes uses different authentication modules:
 
   To enable the **RBAC authorizer**, we would need to start the API server with the `--authorization-mode=RBAC` option. With the RBAC authorizer, we dynamically configure policies. For more details, please review the [Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
 
-  ##### Admission Control
+##### Admission Control
 
-  Admission control is used to specify granular access control policies, which include allowing privileged containers, checking on resource quota, etc. We force these policies using different admission controllers, like ResourceQuota, DefaultStorageClass, AlwaysPullImages, etc. They come into effect only after API requests are authenticated and authorized.
+Admission control is used to specify granular access control policies, which include allowing privileged containers, checking on resource quota, etc. We force these policies using different admission controllers, like ResourceQuota, DefaultStorageClass, AlwaysPullImages, etc. They come into effect only after API requests are authenticated and authorized.
 
 To use admission controls, we must start the Kubernetes API server with the `--enable-admission-plugins`, which takes a comma-delimited, ordered list of controller names:
 `--enable-admission-plugins=NamespaceLifecycle,ResourceQuota,PodSecurityPolicy,DefaultStorageClass`
+
+##### Authorisation and Authentication Implementation
+
+Demo commands:
+
+```
+1. minikube start
+2. kubectl config view
+3. kubectl create namespace lfs158
+4. mkdir rbac
+5. cd rbac/
+6. openssl genrsa -out student.key 2048 /
+7. openssl req -new -key student.key -out student.csr -subj "/CN=student/O=learner" /Create a private key for the student user with openssl tool, then create a certificate signing request for the student user with openssl tool.
+
+8. Create a YAML configuration file for a certificate signing request object, and save it with a blank value for the request field.
+  - [signing-request.yaml](rbac/signing-request.yaml)
+
+9. View the certificate, encode it in base64, and assign it to the request field in the signing-request.yaml file
+- cat student.csr | base64 | tr -d '\n'
+Put this in signing-request.yaml
+
+10. Create the certificate signing request object, then list the certificate signing request objects. It shows a pending state:
+  - kubectl create -f signing-request.yaml
+
+11. kubectl get csr
+12. Approve the certificate signing request object, then list the certificate signing request objects again. It shows both approved and issued states:
+  - kubectl certificate approve student-csr
+
+13. kubectl get csr
+14. Extract the approved certificate from the certificate signing request, decode it with base64 and save it as a certificate file. Then view the certificate in the newly created certificate file:
+  - kubectl get csr student-csr -o jsonpath='{.status.certificate}' | base64 --decode > student.crt
+  - cat student.crt
+
+15. Configure the student user's credentials by assigning the key and certificate:
+  - kubectl config set-credentials student --client-certificate=student.crt --client-key=student.key
+
+16. Create a new context entry in the kubectl client's configuration file for the student user, associated with the lfs158 namespace in the minikube cluster:
+  - kubectl config set-context student-context --cluster=minikube --namespace=lfs158 --user=student
+
+17. kubectl config view
+18. While in the default minikube context, create a new deployment in the lfs158 namespace:
+  - kubectl -n lfs158 create deployment nginx --image=nginx:alpine
+
+19. From the new context student-context try to list pods. The attempt fails because the student user has no permissions configured for the student-context:
+  - kubectl --context=student-context get pods
+
+// Assigning Permissions
+
+20. Create a [YAML configuration file](rbac/role.yaml) for a pod-reader role object, which allows only get, watch, list actions in the lfs158 namespace against pod objects. Then create the role object and list it from the default minikube context, but from the lfs158 namespace.
+  - kubectl create -f role.yaml
+  - kubectl -n lfs158 get roles
+
+21.  Create a [YAML configuration file](rbac/rolebinding.yaml) for a rolebinding object, which assigns the permissions of the pod-reader role to the student user. Then create the rolebinding object and list it from the default minikube context, but from the lfs158 namespace. Then:
+  - kubectl create -f rolebinding.yaml
+  - kubectl -n lfs158 get rolebindings
+  - kubectl --context=student-context get pods
+```
+
+---
+
+### Services
+
+Services are used to group Pods to provide common access points from the external world to the containerized applications.
+
+##### Connecting Users to PODS
+
+To access the application, a user/client needs to connect to the Pods. As Pods are ephemeral in nature, resources like IP addresses allocated to it cannot be static. Pods could be terminated abruptly or be rescheduled based on existing requirements.
+
+![](images/SOE.png)
+
+The user/client now connects to a Service via its ClusterIP, which forwards traffic to one of the Pods attached to it. A Service provides load balancing by default while selecting the Pods for traffic forwarding.
+
+[Example](serviceObject.yml)
+
+> If the targetPort is not defined explicitly, then traffic will be forwarded to Pods on the port on which the Service receives traffic.
+
+##### kube-proxy
+
+All worker nodes run a daemon called kube-proxy, which watches the API server on the master node for the addition and removal of Services and endpoints. In the example below, for each new Service, on each node, kube-proxy configures iptables rules to capture the traffic for its ClusterIP and forwards it to one of the Service's endpoints. Therefore any node can receive the external traffic and then route it internally in the cluster based on the iptables rules. When the Service is removed, kube-proxy removes the corresponding iptables rules on all nodes as well.
+
+![](images/kubeproxy.png)
+
+##### Service Discovery
+
+1. Environment Variables
+2. DNS
+
+##### Service Type
+
+Access scope is decided by ServiceType, which can be configured when creating the Service.
+
+**ClusterIP and NodePort**
+
+ClusterIP is the default ServiceType. A Service receives a Virtual IP address, known as its ClusterIP. This Virtual IP address is used for communicating with the Service and is accessible only within the cluster.
+
+With the NodePort ServiceType, in addition to a ClusterIP, a high-port, dynamically picked from the default range 30000-32767, is mapped to the respective Service, from all the worker nodes.
+
+The NodePort ServiceType is useful when we want to make our Services accessible from the external world. The end-user connects to any worker node on the specified high-port, which proxies the request internally to the ClusterIP of the Service, then the request is forwarded to the applications running inside the cluster.
+
+**Load Balance**
+With the LoadBalancer ServiceType:
+
+- NodePort and ClusterIP are automatically created, and the external load balancer will route to them
+- The Service is exposed externally using the underlying cloud provider's load balancer feature.
+- The Service is exposed at a static port on each worker node
+
+**ExternalIP**
+A Service can be mapped to an ExternalIP address if it can route to one or more of the worker nodes. Traffic that is ingressed into the cluster with the ExternalIP (as destination IP) on the Service port, gets routed to one of the Service endpoints. This type of service requires an external cloud provider such as Google Cloud Platform or AWS.
+
+![](images/ExternalIP.png)
+
+**ExternalName**
+
+ExternalName is a special ServiceType, that has no Selectors and does not define any endpoints. When accessed within the cluster, it returns a CNAME record of an externally configured Service.
+
+The primary use case of this ServiceType is to make externally configured Services like my-database.example.com available to applications inside the cluster. If the externally defined Service resides within the same Namespace, using just the name my-database would make it available to other applications and Services within that same Namespace.
