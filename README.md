@@ -619,3 +619,50 @@ readinessProbe:
   initialDelaySeconds: 5
   periodSeconds: 5
 ```
+
+### Kubernetes Volume Management
+
+#### Volumes
+
+As we know, containers running in Pods are ephemeral in nature. All data stored inside a container is deleted if the container crashes. However, the kubelet will restart it with a clean slate, which means that it will not have any of the old data.
+In Kubernetes, a Volume is attached to a Pod and can be shared among the containers of that Pod. The Volume has the same life span as the Pod, and it outlives the containers of the Pod - this allows data to be preserved across container restarts.
+
+> A directory which is mounted inside a Pod is backed by the underlying Volume Type. A Volume Type decides the properties of the directory, like size, content, default access modes, etc.
+
+- **Persistant Volume**
+  In a typical IT environment, storage is managed by the storage/system administrators. The end user will just receive instructions to use the storage but is not involved with the underlying storage management.
+
+In the containerized world, we would like to follow similar rules, but it becomes challenging, given the many Volume Types we have seen earlier. Kubernetes resolves this problem with the PersistentVolume (PV) subsystem, which provides APIs for users and administrators to manage and consume persistent storage. To manage the Volume, it uses the PersistentVolume API resource type, and to consume it, it uses the PersistentVolumeClaim API resource type.
+
+A Persistent Volume is a network-attached storage in the cluster, which is provisioned by the administrator.
+
+PersistentVolumes can be dynamically provisioned based on the **StorageClass** resource. A StorageClass contains pre-defined provisioners and parameters to create a PersistentVolume. Using PersistentVolumeClaims, a user sends the request for dynamic PV creation, which gets wired to the StorageClass resource.
+
+- **Persistant Volume Claims**
+
+A PersistentVolumeClaim (PVC) is a request for storage by a user. Users request for PersistentVolume resources based on type, access mode, and size. There are three access modes: ReadWriteOnce (read-write by a single node), ReadOnlyMany (read-only by many nodes), and ReadWriteMany (read-write by many nodes). Once a suitable PersistentVolume is found, it is bound to a PersistentVolumeClaim.
+
+- **Container Storage Interface (CSI)**
+
+##### Consuming A Volume in Containers
+
+```
+1. minikube ssh
+2. mkdir pod-volume
+3. cd pod-volume
+4. pwd // remember the path
+5. exit
+6. kubectl create -f sharePod.yml     // check the share pod file for demo code
+7. kubectl get pods
+8. kubectl expose pod share-pod --type=NodePort --port=80
+9. kubectl get services,endpoints
+10. minikube service share-pod
+11. kubectl delete pod share-pod
+
+// checking by deleteing this pod and running a check pod
+
+12. kubectl create -f checkPod.yml
+13. kubectl get pods
+14. kubectl get services,endpoints
+15. minikube service share-pod
+```
