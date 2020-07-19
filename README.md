@@ -87,7 +87,7 @@ Besides storing the cluster state, etcd is also used to store configuration deta
 
 A worker node provides a running environment for client applications. Though containerized microservices, these applications are encapsulated in Pods, controlled by the cluster control plane agents running on the master node. Pods are scheduled on worker nodes, where they find required compute, memory and storage resources to run, and networking to talk to each other and the outside world.
 _A Pod is the smallest scheduling unit in Kubernetes. It is a logical collection of one or more containers scheduled together._
-![](images/workernode.png)
+<img src="./images/workernode.png" width="380" height="200" />
 
 A worker node has the following components:
 
@@ -102,14 +102,15 @@ A worker node has the following components:
 The kubelet is an agent running on each node and communicates with the control plane components from the master node. It receives Pod definitions, primarily from the API server, and interacts with the container runtime on the node to run containers associated with the Pod. It also monitors the health of the Pod's running containers.
 The kubelet connects to the container runtime using Container Runtime Interface (CRI). CRI consists of protocol buffers, gRPC API, and libraries.
 
-![](images/CRI.png)
+<img src="./images/CRI.png" width="540" height="200" />
 
 CRI implements two services: `ImageService` and `RuntimeService`. The ImageService is responsible for all the image-related operations, while the RuntimeService is responsible for all the Pod and container-related operations.
-![](images/dockershim.png)
 
-![](images/cri-containerd.png)
+<img src="./images/dockershim.png" width="540" height="200"/>
 
-![](images/crio.png)
+<img src="./images/cri-containerd.png" width="540" height="200"/>
+
+<img src="./images/crio.png" width="380" height="200"/>
 
 **WorkerNode:kube-proxy**
 The kube-proxy is the network agent which runs on each node responsible for dynamic updates and maintenance of all networking rules on the node. It abstracts the details of Pods networking and forwards connection requests to Pods.
@@ -125,7 +126,8 @@ Addons are cluster features and functionality not yet available in Kubernetes, t
 _The Kubernetes network model aims to reduce complexity, and it treats Pods as VMs on a network, where each VM receives an IP address - thus each Pod receiving an IP address. This model is called "IP-per-Pod" and ensures Pod-to-Pod communication, just as VMs are able to communicate with each other._
 
 **_Container Network Interface (CNI)_**
-![](images/cni.png)
+
+<img src="./images/cni.png" width="380" height="200"/>
 
 **For a successfully deployed containerized applications running in Pods inside a Kubernetes cluster, it requires accessibility from the outside world. Kubernetes enables external accessibility through services, complex constructs which encapsulate networking rules definitions on cluster nodes. By exposing services to the external world with kube-proxy, applications become accessible from outside the cluster over a virtual IP.**
 
@@ -202,7 +204,8 @@ With [kube-aws](https://github.com/kubernetes-incubator/kube-aws) we can create,
 - Web-based User Interface (Web UI) from a web browser ([Web ui Dashboard](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/))
 - APIs from CLI or programmatically
 
-![](images/api-server-space.jpg)
+<img src="./images/api-server-space.jpg"  width="380" height="200" />
+
 **Core Group (/api/v1)**
 
 This group includes objects such as Pods, Services, nodes, namespaces, configmaps, secrets, etc.
@@ -281,7 +284,7 @@ A Pod is the smallest and simplest Kubernetes object. It is the unit of deployme
 - Share the same network namespace
 - Have access to mount the same external storage (volumes).
 
-![](images/Pods.png)
+<img src="./images/Pods.png"  width="380" height="200" />
 
 [Checkout the example configarion file of pod.](pods.yml)
 
@@ -299,7 +302,8 @@ Set-Based Selectors allow filtering of objects based on a set of values. We can 
 A ReplicaSet is the next-generation ReplicationController. ReplicaSets support both equality- and set-based selectors, whereas ReplicationControllers only support equality-based Selectors.
 
 Creating a pod to match current and desired state:
-![](images/ReplicaSet3.png)
+
+<img src="./images/ReplicaSet3.png"  width="380" height="180" />
 
 ReplicaSets can be used independently as Pod controllers but they only offer a limited set of features. A set of complementary features are provided by Deployments, the recommended controllers for the orchestration of Pods. Deployments manage the creation, deletion, and updates of Pods. A Deployment automatically creates a ReplicaSet, which then creates a Pod. There is no need to manage ReplicaSets and Pods separately, the Deployment will manage them on our behalf.
 
@@ -307,11 +311,11 @@ ReplicaSets can be used independently as Pod controllers but they only offer a l
 
 Deployment objects provide declarative updates to Pods and ReplicaSets. The DeploymentController is part of the master node's controller manager, and it ensures that the current state always matches the desired state. It allows for seamless application updates and downgrades through rollouts and rollbacks, and it directly manages its ReplicaSets for application scaling.
 
-![](images/Deployment.png)
+<img src="./images/Deployment.png"  width="380" height="240" />
 
 > In the Deployment, we change the Pods' Template and we update the container image from nginx:1.7.9 to nginx:1.9.1. The Deployment triggers a new ReplicaSet B for the new container image versioned 1.9.1 and this association represents a new recorded state of the Deployment, Revision 2. The seamless transition between the two ReplicaSets, from ReplicaSet A with 3 Pods versioned 1.7.9 to the new ReplicaSet B with 3 new Pods versioned 1.9.1, or from Revision 1 to Revision 2, is a Deployment rolling update.
 
-![](images/Replika.png)
+<img src="./images/Replika.png"  width="380" height="240" />
 
 > The Deployment keeps its prior configuration states saved as Revisions which play a key factor in the rollback capability of the Deployment - returning to a prior known configuration state.
 
@@ -451,7 +455,7 @@ Services are used to group Pods to provide common access points from the externa
 
 To access the application, a user/client needs to connect to the Pods. As Pods are ephemeral in nature, resources like IP addresses allocated to it cannot be static. Pods could be terminated abruptly or be rescheduled based on existing requirements.
 
-![](images/SOE.png)
+<img src="./images/SOE.png" width="380" height="200" />
 
 The user/client now connects to a Service via its ClusterIP, which forwards traffic to one of the Pods attached to it. A Service provides load balancing by default while selecting the Pods for traffic forwarding.
 
@@ -463,7 +467,7 @@ The user/client now connects to a Service via its ClusterIP, which forwards traf
 
 All worker nodes run a daemon called kube-proxy, which watches the API server on the master node for the addition and removal of Services and endpoints. In the example below, for each new Service, on each node, kube-proxy configures iptables rules to capture the traffic for its ClusterIP and forwards it to one of the Service's endpoints. Therefore any node can receive the external traffic and then route it internally in the cluster based on the iptables rules. When the Service is removed, kube-proxy removes the corresponding iptables rules on all nodes as well.
 
-![](images/kubeproxy.png)
+<img src="./images/kubeproxy.png" width="380" height="200"/>
 
 ##### Service Discovery
 
@@ -492,7 +496,7 @@ With the LoadBalancer ServiceType:
 **ExternalIP**
 A Service can be mapped to an ExternalIP address if it can route to one or more of the worker nodes. Traffic that is ingressed into the cluster with the ExternalIP (as destination IP) on the Service port, gets routed to one of the Service endpoints. This type of service requires an external cloud provider such as Google Cloud Platform or AWS.
 
-![](images/ExternalIP.png)
+<img src="images/ExternalIP.png" width="380" height="200"/>
 
 **ExternalName**
 
@@ -510,9 +514,9 @@ _Using Dashboard_:
 3. minikube dashboard
 ```
 
-<img src="./images/webinterface.png" width="480" height="240">
-<img src="./images/createAnApp.png" width="480" height="240">
-<img src="./images/deploym.png" width="480" height="240">
+<img src="./images/webinterface.png">
+<img src="./images/createAnApp.png" >
+<img src="./images/deploym.png" >
 
 ```
 - kubectl get deployments
