@@ -57,4 +57,6 @@ CNCF hosts a multitude of projects, with more to be added in the future. CNCF pr
 6.  [Services](6.Services.md)
 7.  [Authentication](7.Authentication.md)
 8.  [Volume Management](8.VolumeManagement.md)
-9.  [Secretes](9.Secrets.md)
+9.  [Secrets](9.Secrets.md)
+10. [Ingress](10.ingress.md)
+11. [Advance Topics](11.Advance.md)

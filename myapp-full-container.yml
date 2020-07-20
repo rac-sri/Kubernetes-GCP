@@ -1,0 +1,6 @@
+containers:
+  - name: myapp-full-container
+    image: myapp
+    envFrom:
+      - configMapRef:
+        name: full-config-map
