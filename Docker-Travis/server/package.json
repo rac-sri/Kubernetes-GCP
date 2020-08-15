@@ -1,0 +1,51 @@
+{
+  "name": "sanata-server",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "nodemon src/server.js --exec babel-node",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "transpile": "babel src -d dist",
+    "install:prod": "yarn install --modules-folder dist/node_modules --production --pure-lockfile",
+    "build": "npm run transpile && npm run install:prod",
+    "test": "ava src/**/*.test.js",
+    "test:watch": "npm test -- --watch",
+    "cli": "babel-node src/mongo.js"
+  },
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "hx-markov-chain": "^1.2.0",
+    "hx-tokenizer": "^1.0.0",
+    "mongodb": "^2.2.24",
+    "open-graph-scraper": "^2.5.3",
+    "restify": "^4.3.0",
+    "twit": "^2.2.5",
+    "winston": "^2.3.1"
+  },
+  "devDependencies": {
+    "ava": "^0.18.2",
+    "babel-cli": "^6.23.0",
+    "babel-preset-env": "^1.1.8",
+    "babel-register": "^6.23.0",
+    "nodemon": "^1.11.0",
+    "rimraf": "^2.6.1"
+  },
+  "ava": {
+    "require": [
+      "babel-register"
+    ],
+    "babel": "inherit"
+  },
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ]
+  }
+}
